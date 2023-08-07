@@ -1,16 +1,18 @@
 #include <iostream>
-
+#include <cmath>
 #include "glew.h"
 #include "glfw3.h"
 #include "log.h"
 #include "GlslDealConfig.h"
 
-/* 编写各顶点位置与颜色 */
-GLfloat vertices_1[] = 
-{	// position				// color
-	0.0f, 0.5f, 0.0f,		1.0f, 0.0f, 0.0f,		// 上顶点(红色)
-	-0.5f, -0.5f, 0.0f,		0.0f, 1.0f, 0.0f,		// 左顶点(绿色)
-	0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f		// 右顶点(蓝色)
+/* 编写各顶点位置 */
+GLfloat vertices_1[] =
+{
+	//position					
+	0.5f, 0.5f, 0.0f,			// top right		0
+	0.5f, -0.5f, 0.0f,			// bottom right		1
+	-0.5f, -0.5f, 0.0f,			// bottom left		2
+	-0.5f, 0.5f, 0.0f,			// top left			3
 };
 
 /* 四个顶点的连接信息给出来 */
@@ -71,11 +73,11 @@ int main()
 
 
     std::string VertextShaderString;
-    mdel.ReadGlslFile("/home/json/zxp/OpenGL/window/glsl/VertexShader.glsl", VertextShaderString);
+    mdel.ReadGlslFile("/home/json/zxp/OpenGL/OpenGL/window/glsl/rectangle/rectangle_v.glsl", VertextShaderString);
     const char * vertextShader = VertextShaderString.c_str();
 
     std::string FragmentShaderString;
-    mdel.ReadGlslFile("/home/json/zxp/OpenGL/window/glsl/FragmentShader.glsl", FragmentShaderString);
+    mdel.ReadGlslFile("/home/json/zxp/OpenGL/OpenGL/window/glsl/rectangle/rectangle_f.glsl", FragmentShaderString);
     const char * fragmentShader = FragmentShaderString.c_str();
 
     GLuint v_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -107,40 +109,15 @@ int main()
 
     glBindVertexArray(VAO);
 
-/*
 
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), (GLvoid*)0)：这一行代码配置顶点属性指针。
-        具体参数解释如下：
-
-        0：表示要配置的顶点属性的索引，对应顶点着色器中的layout(location = 0)。
-        3：表示顶点属性的分量数量，即每个顶点的位置属性由3个分量组成（x、y、z坐标）。
-        GL_FLOAT：表示顶点属性的数据类型为单精度浮点数。
-        GL_FALSE：表示是否对数据进行归一化，对位置属性而言不需要归一化。
-        6*sizeof(GLfloat)：指定连续顶点属性之间的偏移量，这里表示每个顶点数据之间的大小为6个GLfloat。
-        (GLvoid*)0：表示从缓冲的开头位置开始读取数据。
-        glEnableVertexAttribArray(0)：启用顶点属性索引为0的顶点属性数组
-
-*/
-
-    glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), (GLvoid*)0);
+    glVertexAttribPointer(0,3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), (GLvoid*)0);
     glEnableVertexAttribArray(0);
 
-/*
-
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)))：
-        这一行代码配置第二个顶点属性指针。具体参数解释如下：
-
-        1：表示要配置的顶点属性的索引，对应顶点着色器中的layout(location = 1)。
-        3：表示顶点属性的分量数量，即每个顶点的颜色属性由3个分量组成（R、G、B颜色分量）。
-        GL_FLOAT：表示顶点属性的数据类型为单精度浮点数。
-        GL_FALSE：表示是否对数据进行归一化，对颜色属性而言不需要归一化。
-        6*sizeof(GLfloat)：指定连续顶点属性之间的偏移量，这里表示每个顶点数据之间的大小为6个GLfloat。
-        (GLvoid*)(3*sizeof(GLfloat))：表示从缓冲的一半位置（偏移3个GLfloat）开始读取数据。
-        glEnableVertexAttribArray(1)：启用顶点属性索引为1的顶点属性数组。
-
-*/
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
-	glEnableVertexAttribArray(1);	// 通道 1 打开
+/* 设置索引缓冲对象	*/
+	GLuint EBO;
+	glGenBuffers(1, &EBO);		
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices_1), indices_1, GL_STATIC_DRAW); 
 
 
     while(!glfwWindowShouldClose(window))
@@ -151,9 +128,19 @@ int main()
 
         glUseProgram(program);
 
-        glBindVertexArray(VAO);
-        glDrawArrays(GL_TRIANGLES,0,3);
-        glBindVertexArray(0);
+        /*  绘制图形 */
+		float time = glfwGetTime();						// 获取时间
+		float redValue = sin(time) / 2.0f + 0.5f;		// 红色数值计算，范围[0,1]
+		float greenValue = 1 - redValue;				// 绿色数值计算，范围[0.1]。且满足 “redValue + greenValue = 1”
+		int vertexColorLocation = glGetUniformLocation(program, "time");
+		glUniform4f(vertexColorLocation, redValue, greenValue, 0.0f, 1.0f );
+
+		glBindVertexArray(VAO);									// 绑定 VAO
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);				// 绑定 EBO
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);	// 画两个三角形 从第0个顶点开始 一共画6次
+		glBindVertexArray(0);									// 解绑定 VAO
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);				// 解绑定 EBO
+
 
         glfwSwapBuffers(window);
         glfwPollEvents();
