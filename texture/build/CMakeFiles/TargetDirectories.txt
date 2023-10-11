@@ -1,0 +1,3 @@
+/home/json/zxp/OpenGL/OpenGL/texture/build/CMakeFiles/review_main.dir
+/home/json/zxp/OpenGL/OpenGL/texture/build/CMakeFiles/edit_cache.dir
+/home/json/zxp/OpenGL/OpenGL/texture/build/CMakeFiles/rebuild_cache.dir
